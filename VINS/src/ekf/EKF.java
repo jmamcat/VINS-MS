@@ -22,6 +22,7 @@ public class EKF {
 	private Matrix jzMatrix;
 
 	/* Constants */
+	
 	public static final double VRV_VARIANCE = 0.01;
 	public static final double P_DIAGONAL_INITIAL = 0.1;
 	public static final double Q_NOISE = 0.1;
