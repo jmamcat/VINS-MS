@@ -88,6 +88,90 @@ public class DriverActivity extends Activity implements SensorEventListener, Fea
 	}
 
 	private void runOneCycle() {
+		
+		// const VW::ImageMono<unsigned char>*, double delta_t, bool currently_mapping_flag
+		
+		
+		
+		/*
+		 * // Nullify image selection robot->nullify_image_selection();
+		 * 
+		 * init_feature_search_region_defined_flag = false;
+		 * 
+		 * 
+		 * // Control vector of accelerations VNL::Vector<double> u(3);
+		 * u.Fill(0.0);
+		 * 
+		 * sim_or_rob->set_control(u, delta_t);
+		 * 
+		 * // Record the current position so that I can estimate velocity // (We
+		 * can guarantee that the state vector has position; we can't //
+		 * guarantee that it has velocity.) VNL::Vector<double> xv =
+		 * scene->get_xv(); scene->get_motion_model()->func_xp(xv);
+		 * VNL::VectorFixed<3, double> prev_xp_pos =
+		 * scene->get_motion_model()->get_xpRES().Extract(3);
+		 * 
+		 * // Prediction step kalman->predict_filter_fast(scene, u, delta_t);
+		 * 
+		 * number_of_visible_features =
+		 * scene->auto_select_n_features(NUMBER_OF_FEATURES_TO_SELECT);
+		 * 
+		 * if(Scene_Single::STATUSDUMP) scene->print_selected_features();
+		 * 
+		 * if (scene->get_no_selected() != 0) { //
+		 * scene->predict_measurements(); if (DEBUGDUMP) cout <<
+		 * "Time after predicting measurements " << timer1 << endl;
+		 * 
+		 * // Calls function in control_general.cc number_of_matched_features =
+		 * make_measurements(scene, sim_or_rob);
+		 * 
+		 * if (DEBUGDUMP) cout << "Time after making measurements " << timer1 <<
+		 * endl;
+		 * 
+		 * if (scene->get_successful_measurement_vector_size() != 0) {
+		 * kalman->total_update_filter_slow(scene);
+		 * 
+		 * if (DEBUGDUMP) cout << "Time after total_update_filter " << timer1 <<
+		 * endl;
+		 * 
+		 * scene->normalise_state();
+		 * 
+		 * if (DEBUGDUMP) cout << "Time after normalise_state " << timer1 <<
+		 * endl; } }
+		 * 
+		 * scene->delete_bad_features();
+		 * 
+		 * // Let's enforce symmetry of covariance matrix... // Add to transpose
+		 * and divide by 2 VNL::Matrix<double>
+		 * Pxx(scene->get_total_state_size(), scene->get_total_state_size());
+		 * scene->construct_total_covariance(Pxx); VNL::Matrix<double> PxxT =
+		 * Pxx.Transpose();
+		 * 
+		 * Pxx.Update(Pxx * 0.5 + PxxT * 0.5); scene->fill_covariances(Pxx);
+		 * 
+		 * // Look at camera speed estimate // Get the current position and
+		 * estimate the speed from it xv = scene->get_xv();
+		 * scene->get_motion_model()->func_xp(xv); VNL::VectorFixed<3, double>
+		 * xp_pos = scene->get_motion_model()->get_xpRES().Extract(3); velocity
+		 * = (xp_pos - prev_xp_pos) / delta_t; double speed =
+		 * sqrt(velocity.SquaredMagnitude()); if (DEBUGDUMP) cout <<
+		 * "Camera speed " << speed << " ms^-1 " << endl;
+		 * 
+		 * if (speed > 0.2 && currently_mapping_flag) { if
+		 * (number_of_visible_features < NUMBER_OF_FEATURES_TO_KEEP_VISIBLE &&
+		 * scene->get_feature_init_info_vector().size() < (unsigned
+		 * int)(MAX_FEATURES_TO_INIT_AT_ONCE)) { AutoInitialiseFeature(u,
+		 * delta_t); } }
+		 * 
+		 * if (DEBUGDUMP) cout << "Time after matching point features: " <<
+		 * timer1 << endl;
+		 * 
+		 * MatchPartiallyInitialisedFeatures();
+		 * 
+		 * if (DEBUGDUMP) cout <<
+		 * "Time after matching partially init. feature: " << timer1 << endl;
+		 */
+
 		if (!isFeaturesReady)
 			return;
 
@@ -117,13 +201,13 @@ public class DriverActivity extends Activity implements SensorEventListener, Fea
 			start = System.currentTimeMillis();
 			/* LOOP THROUGH THE RETURNED FEATURES */
 
-			/* IF OLD FEATURE TYPE, CALL EKF.removeFeature(featureIndex)*/ 
+			/* IF OLD FEATURE TYPE, CALL EKF.removeFeature(featureIndex) */
 			Collections.reverse(update.getBadPointsIndex());
 			for (Integer index : update.getBadPointsIndex())
 				ekf.deleteFeature(index);
 
-			
-			/* IF RE-OBSERVED FEATURE, CALL
+			/*
+			 * IF RE-OBSERVED FEATURE, CALL
 			 * EKF.updateReobservedFeature(featureIndex, observedDistance,
 			 * observedHeading)
 			 */
@@ -131,14 +215,13 @@ public class DriverActivity extends Activity implements SensorEventListener, Fea
 			for (PointDouble featpos : update.getCurrentPoints())
 				ekf.updateFromReobservedFeatureCoords(i++, featpos.getX(), featpos.getY());
 
-			/* IF NEW FEATURE, CALL EKF.addFeature(x, y) */ 
+			/* IF NEW FEATURE, CALL EKF.addFeature(x, y) */
 			for (PointDouble featpos : update.getNewPoints())
 				ekf.addFeature(featpos.getX(), featpos.getY());
 
 			timeStringBuilder.append("EKF took: " + (System.currentTimeMillis() - start) + "ms\n");
-			timeStringBuilder.append("Features to Delete: " + update.getBadPointsIndex().size()
-					+ "\nFeatures to Update: " + update.getCurrentPoints().size() + "\nFeatures to Add: "
-					+ update.getNewPoints().size() + "\n");
+			timeStringBuilder.append("Features to Delete: " + update.getBadPointsIndex().size() + "\nFeatures to Update: "
+					+ update.getCurrentPoints().size() + "\nFeatures to Add: " + update.getNewPoints().size() + "\n");
 
 			devicePose = ekf.getCurrDevicePose();
 			logString.append("Device Pose(EKF): " + devicePose.toString() + "\n");
