@@ -1,8 +1,11 @@
 package scene;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import Jama.Matrix;
 import scene_models.Internal_Measurement;
+import scene_models.Motion_Model;
 
 /**
  * 
@@ -10,20 +13,22 @@ import scene_models.Internal_Measurement;
  *
  */
 public class Scene_Single {
-	// Motion_Model *motion_model;
-
+	
+	
+	protected Motion_Model motion_model;
+	
 	/*
 	 * The robot state \f$x_v\f$, as used by the motion model. The complete system state (robot and features) is not stored explicitely by
 	 * Scene, but instead is constructed as required by construct_total_state_and_covariance().
 	 */
 	private ArrayList<Double> xv;
 
-	//  The robot state covariance  \f$P_{xx}\f$, as used by the motion model.
-	private ArrayList<ArrayList<Double>> Pxx;
+	/**  The robot state covariance P<SUB>xx</SUB> as used by the motion model. */
+	private Matrix Pxx;
 
 	// Lists of pointers to features
 	// feature_list contains all features
-	private ArrayList<Feature> feature_list;
+	private List<Feature> featureList;
 
 	// selected_feature_list just lists those currently selected for measurement
 	private ArrayList<Feature> selected_feature_list;
@@ -53,4 +58,24 @@ public class Scene_Single {
 	long output_counter;
 
 	// TODO: implement more methods
+	
+	protected Motion_Model motionModel;
+	
+	final public Motion_Model getMotionModel() {
+		return motionModel;
+	}
+	
+	final public List<Double> getXv() {
+		return xv;
+	}
+
+	public Matrix getPxx() {
+		return Pxx;
+	}
+
+	public List<Feature> getFeatureListNoConst() {
+		return featureList;
+	}
+	
+	
 }

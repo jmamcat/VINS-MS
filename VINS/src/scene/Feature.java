@@ -2,6 +2,7 @@ package scene;
 
 import java.util.List;
 
+import scene_models.Partially_Initialised_Feature_Measurement_Model;
 import Jama.Matrix;
 
 /**
@@ -18,10 +19,10 @@ public class Feature {
 	
 	// private Fully_Initialised_Feature_Measurement_Model fully_initialised_feature_measurement_model; // null if not relevant
 	
-	/** The estimate of the feature state. (e.g. the feature's 3D position) */
+	/** The estimate of the feature state (e.g. the feature's 3D position). */
 	private List<Double> y;
 	
-	/** The covariance of this feature \f$ */
+	/** The covariance of this feature */
 	private Matrix Pyy;
 	
 	/** The covariance between the robot state and this feature's state. */
@@ -77,7 +78,7 @@ public class Feature {
 	private int knownFeatureLabel;
 
 	
-	/*****************************Access functions******************************/
+	//*****************************Access functions******************************/
 	
 	public List<Double> getY() {
 		
@@ -224,12 +225,57 @@ public class Feature {
 		this.knownFeatureLabel = knownFeatureLabel;
 	}
 	
-	
-	public Feature(int label, int positionInList, final List<Double> h) {
+	/** Constructor for partially-initialised features. */
+	public Feature(int label, int positionInList, Scene_Single scene, final List<Double> h,
+			Partially_Initialised_Feature_Measurement_Model measurementModel) {
 		this.label = label;
 		this.positionInList = positionInList;
+		// positionInTotalStateVector = 0; /* This should be set properly when feature is added */
+		 
+		/* Save the vehicle position where this feature was acquired */	  
+		scene.getMotionModel().funcXp( scene.getXv() );
+		xp_orig = scene.getMotionModel().getXpRES();
 		
+		// Call model functions to calculate feature state, measurement noise
+	    // and associated Jacobians. Results are stored in RES matrices 
+
+	    // First calculate "position state" and Jacobian
+		scene.getMotionModel().funcXp( scene.getXv() );
+		scene.getMotionModel().funcDxpByDxv( scene.getXv() );
 		
+
+		// Now ask the model to initialise the state vector and calculate Jacobians
+		// so that I can go and calculate the covariance matrices
+		measurementModel.funcYpiAndDypiByDxpAndDypiByDhiAndRi(h, scene.getMotionModel().getXpRES());
+		
+		// State y  
+		y = measurementModel.getYpiRES();
+		
+		// tempFS1 will store dypiByDxv
+		// TODO check if times() does what it does 
+		Matrix tempFS1 = measurementModel.getDypiByDxpRES().times( scene.getMotionModel().getDxpByDxvRES() ); 
+		
+		// Pxy
+		Pxy = scene.getPxx().times(tempFS1.transpose());
+		
+		// Pyy
+		// TODO DERP OPERATION ORDER DERP
+		Pyy = tempFS1
+				.times(scene.getPxx()
+				.times(tempFS1.transpose()))			
+			.plus( 
+			measurementModel.getDypiByDhiRES()
+				.times(measurementModel.getDypiByDhiRES().transpose()));
+		
+		// Covariances of this feature with others
+		for (Feature feature : scene.getFeatureListNoConst()) {
+			// new Pypiyj = dypi_by_dxv . Pxyj
+		    // Size of this is FEATURE_STATE_SIZE(new) by FEATURE_STATE_SIZE(old)
+			Matrix newPyjypiToStore = (tempFS1.times(feature.getPxy())).transpose();
+			matrix_block_list.add(newPyjypiToStore);
+		}
+		
+		knownFeatureLabel = -1;
 	}
 	
 	  
