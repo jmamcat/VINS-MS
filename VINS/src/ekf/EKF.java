@@ -37,6 +37,7 @@ public class EKF {
 
 	/********** Getters **********/
 	public ArrayList<ArrayList<Double>> getP() {
+		
 		return (ArrayList<ArrayList<Double>>) P.clone();
 	}
 
